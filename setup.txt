@@ -97,7 +97,7 @@ reflector --sort rate --country 'Iran,' --protocl https --latest 10 --age 168 --
 
 vim /etc/pacman.conf
 	ParallelDownloads = 6
-pacstrap /mnt linux linux-firmware base base-devel grub efibootmgr amd-ucode man-pages man-db netoworkmanager lvm2 os-prober git vim tmux firefox(#iptables ,dhcpcd)
+pacstrap /mnt linux linux-firmware base base-devel grub efibootmgr amd-ucode man-pages man-db netoworkmanager lvm2 os-prober git vim tmux firefox openssh (#iptables ,dhcpcd)
 
 
 genfstab -U /mnt >> /mnt/etc/fstab
@@ -173,7 +173,7 @@ lspci -k | grep -A 2 -E "(VGA|3D)"
 
 //// Desktop Environment
 /// KDE
-pacman -S sddm plasma-desktop konsole
+pacman -S sddm plasma kde-applications kscreen
 systemctl enable sddm --now
 
 
