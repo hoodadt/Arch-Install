@@ -4,70 +4,32 @@
 
 //// Base
 cat /sys/firmware/efi/fw_platform_size (should return 64-bit)
-wifi-menu
+iwtcl wlan0 connet-hidden <ssid>
+
 timedatctl set-ntp true
-
-
-cgdisk /dev/<disk>
-	select freespace
-		# Boot
-		FirstSector: <empty>
-		Size:	512Mib
-			Hex: <empty>
-			Partition_name: boot
-	
-		# Core
-		FirstSector: <empty>
-		Size: <empty>
-			Hex: <empty>
-			Partition_name: core
-		
-	Write
-		Yes
-	Quit
-
-
-cryptsetup #luksFormat --type luks2 -y -v --use-random --cipher aes-xts-plain64 --key-size 512 --hash sha512 --iter-time 5000  /dev/<core_partition>
-# cryptsetup luksDump /dev/vga/lva1
-# cryptsetup benchmark
-cryptsetup luksOpen /dev/<core_partition> core
-
-mkfs.ext4 /dev/<boot_partition>
-mkfs.ext4 /dev/mapper/core
-mkswap /dev/<swap>
-
-mount /dev/mapper/core /mnt
-mount --mkdir /dev/<boot_partition> /mnt/boot
-mount --mkdir /dev/<efi_partition> /mnt/boot/efi
-swapon /dev/<swap>
-
 
 fdisk /dev/<disk>
 	# Boot
-	#g
 	n
 		FirstSector: <empty>
-		LastSector: +512M
+		LastSector: +256M
 	t
 		1	(EFI)
 
-	# Swap
-	n
-		FirstSector: <empty>
-		LastSector: +8G
-	t
-		43	(linux LVM)
 	
 	# Core
 	n
 		FirstSector: <empty>
 		LastSector: <empty>
 	t
-		43
+		44
 
 	w
 
+
 cryptsetup luksFormat --type luks2 -y -v --use-random --cipher aes-xts-plain64 --key-size 512 --hash sha512 --iter-time 5000  /dev/<core_partition>
+# cryptsetup luksDump /dev/vga/lva1
+# cryptsetup benchmark
 
 pvcreate /dev/mapper/core
 vg create vg /dev/mapper/core
@@ -85,11 +47,6 @@ mount --mkdir /dev/<efi_partition> /mnt/boot/efi
 
 
 
-
-
-
-
-
 # Packages
 #vim /etc/pacman.d/mirrorlist
 mv /etc/pacman.d/mirrorlist /etc/pacman.d/mirrorlist.bak
@@ -104,6 +61,7 @@ genfstab -U /mnt >> /mnt/etc/fstab
 arch-chroot /mnt
 
 
+
 # Configs
 systemctl enable NetworkManager
 #ln -sf /usr/share/zoneinfo/Asia/Tehran /etc/localtime try timedatectl
@@ -112,16 +70,18 @@ vim /etc/locale.gen
 	!# en_US.UTF-8 UTF-8
 locale-gen
 echo "LANG=en_US.UTF-8" >> /etc/locale.conf
-# echo "<host_name>" >> /etc/hostname try hostname-ctl
+echo "<host_name>" >> /etc/hostname
 vim /etc/hosts
 	127.0.0.1	localhost
-	::1			localhost
+	::1		localhost
+
 
 
 # Initramfs
 vim /etc/mkinitcpio.conf
 	HOOKS=(base udev autodetect keyboard modconf block encrypt lvm2 filesystems fsck)
 mkinitcpio -P
+
 
 
 # Grub
