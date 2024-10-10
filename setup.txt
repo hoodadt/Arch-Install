@@ -54,7 +54,7 @@ reflector --sort rate --country 'Iran,' --protocl https --latest 10 --age 168 --
 
 vim /etc/pacman.conf
 	ParallelDownloads = 6
-pacstrap /mnt linux linux-firmware base base-devel grub efibootmgr amd-ucode man-pages man-db netoworkmanager lvm2 os-prober git vim tmux firefox openssh (#iptables ,dhcpcd)
+pacstrap /mnt linux linux-firmware base base-devel grub efibootmgr amd-ucode man-pages man-db netoworkmanager lvm2 os-prober git vim tmux firefox openssh (dhcpcd)
 
 
 genfstab -U /mnt >> /mnt/etc/fstab
@@ -64,12 +64,15 @@ arch-chroot /mnt
 
 # Configs
 systemctl enable NetworkManager
-#ln -sf /usr/share/zoneinfo/Asia/Tehran /etc/localtime try timedatectl
+
+ln -sf /usr/share/zoneinfo/Asia/Tehran /etc/localtime
 hwclock --systohc
+
 vim /etc/locale.gen
 	!# en_US.UTF-8 UTF-8
 locale-gen
 echo "LANG=en_US.UTF-8" >> /etc/locale.conf
+
 echo "<host_name>" >> /etc/hostname
 vim /etc/hosts
 	127.0.0.1	localhost
@@ -89,7 +92,6 @@ blkid -o value -s UUID </dev/core_partition> >> /etc/default/grub
 
 vim /etc/default/grub
 	GRUB_TIMEOUT=1
-	#GRUB_CMDLINE_LINUX_DEFAULT="cryptdevice=UUID=</dev/core_partition_UUID>:core root=/dev/mapper/core"
 	GRUB_CMDLINE_LINUX_DEFAULT="cryptdevice=UUID=</dev/core_partition_UUID>:core root=/dev/vg/root"
 
 grub-install (--bootloader-id=Arch)
@@ -137,8 +139,15 @@ pacman -S sddm plasma kde-applications kscreen
 systemctl enable sddm --now
 
 
+
 /// Xfce
 pacman -S xorg xfce4 xfce4-goodies (lightdm ,lightdm-gtk-greeter ,lightdm.service)
+
+
+
+/// Hyperland
+# https://www.youtube.com/watch?v=iE99GrcZzhs
+
 
 
 //// Troubleshoot
