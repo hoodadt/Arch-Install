@@ -12,7 +12,7 @@ fdisk /dev/<disk>
 	# Boot
 	n
 		FirstSector: <empty>
-		LastSector: +256M
+		LastSector: +512M
 	t
 		1	(EFI)
 
@@ -48,12 +48,11 @@ mount --mkdir /dev/<efi_partition> /mnt/boot/efi
 
 
 # Packages
-#vim /etc/pacman.d/mirrorlist
 mv /etc/pacman.d/mirrorlist /etc/pacman.d/mirrorlist.bak
 reflector --sort rate --country 'Iran,' --protocl https --latest 10 --age 168 --save /etc/pacman.d/mirrorlist 
 
 vim /etc/pacman.conf
-	ParallelDownloads = 6
+	ParallelDownloads = 10
 pacstrap /mnt linux linux-firmware base base-devel grub efibootmgr amd-ucode man-pages man-db netoworkmanager lvm2 os-prober git vim tmux firefox openssh (dhcpcd)
 
 
@@ -113,7 +112,7 @@ reboot
 //// GUI
 /// Display Servers
 // Xorg
-pacmna -S xorg
+pacman -S xorg
 
 // Wayland
 
@@ -150,6 +149,9 @@ pacman -S xorg xfce4 xfce4-goodies (lightdm ,lightdm-gtk-greeter ,lightdm.servic
 
 
 
+
+
+
 //// Troubleshoot
 wifi-menu
 cryptsetup luksOpen /dev/<core_partition> core
@@ -160,5 +162,3 @@ mount /dev/<efi_partition> /mnt/boot/efi
 arch-chroot /mnt
 
 unmount -R /mnt
-
-
