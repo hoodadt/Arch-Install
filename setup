@@ -1,18 +1,22 @@
 ///// Setup
 # https://www.youtube.com/watch?v=ybvwikNlx9I&t=946s
-# https://wiki.archlinux.org/title/Installation_guide
+
+//// Todo
+# setup secure boot (https://wiki.archlinux.org/title/Installation_guide#Boot_the_live_environment)
+
 
 //// Base
 cat /sys/firmware/efi/fw_platform_size (should return 64-bit)
 iwtcl wlan0 connet-hidden <ssid>
 
-timedatctl set-ntp true
+timedatectl set-ntp true
+timedatectl set-timezone <time_zone>
 
 fdisk /dev/<disk>
 	# Boot
 	n
 		FirstSector: <empty>
-		LastSector: +512M
+		LastSector: +1G
 	t
 		1	(EFI)
 
@@ -27,7 +31,8 @@ fdisk /dev/<disk>
 	w
 
 
-cryptsetup luksFormat --type luks2 -y -v --use-random --cipher aes-xts-plain64 --key-size 512 --hash sha512 --iter-time 5000  /dev/<core_partition>
+cryptsetup luksFormat --type luks2 -y -v --cipher aes-xts-plain64 -s 512 --iter-time 2500 --pbkdf argon2id --pbkdf-memory 1048576 --pbkdf-parallel 4 /dev/<core_partition>
+cryptsetup luksOpen /dev/<core_partition> core
 # cryptsetup luksDump /dev/vga/lva1
 # cryptsetup benchmark
 
@@ -43,22 +48,27 @@ swapon /dev/vg/swap
 
 mount /dev/vg/core /mnt
 mount --mkdir /dev/<boot_partition> /mnt/boot
-mount --mkdir /dev/<efi_partition> /mnt/boot/efi
-
+mount --mkdir /dev/<efi_partition> /mnt/boot/efi (/mnt/efi)
 
 
 # Packages
 mv /etc/pacman.d/mirrorlist /etc/pacman.d/mirrorlist.bak
-reflector --sort rate --country 'Iran,' --protocl https --latest 10 --age 168 --save /etc/pacman.d/mirrorlist 
+reflector --sort rate --country 'Iran,' --protocl https --age 168 --save /etc/pacman.d/mirrorlist
 
 vim /etc/pacman.conf
-	ParallelDownloads = 10
-pacstrap /mnt linux linux-firmware base base-devel grub efibootmgr amd-ucode man-pages man-db netoworkmanager lvm2 os-prober git vim tmux firefox openssh (dhcpcd)
+	ParallelDownloads = 24
+pacstrap -K /mnt base base-devel linux linux-firmware amd-ucode grub efibootmgr man-db netoworkmanager lvm2 os-prober git vim tmux firefox openssh
 
 
 genfstab -U /mnt >> /mnt/etc/fstab
 arch-chroot /mnt
 
+
+# Enabling zram
+echo 'zram' > /etc/modules-load.d/zram.conf
+echo 'ACTION=="add", KERNEL=="zram0", ATTR{initstate}=="0", ATTR{comp_algorithm}="zstd", ATTR{disksize}="8G", TAG+="systemd"' > /etc/udev/rules.d/99-zram.rules
+echo '/dev/zram0 none swap defaults,discard,pri=100,x-systemd.makefs 0 0' >> /etc/fstab
+# add as kernel parameter zswap.enabled=0
 
 
 # Configs
@@ -75,7 +85,7 @@ echo "LANG=en_US.UTF-8" >> /etc/locale.conf
 echo "<host_name>" >> /etc/hostname
 vim /etc/hosts
 	127.0.0.1	localhost
-	::1		localhost
+	::1			localhost
 
 
 
@@ -93,7 +103,7 @@ vim /etc/default/grub
 	GRUB_TIMEOUT=1
 	GRUB_CMDLINE_LINUX_DEFAULT="cryptdevice=UUID=</dev/core_partition_UUID>:core root=/dev/vg/root"
 
-grub-install (--bootloader-id=Arch)
+grub-install (--target=x86_64-efi --efi-directory=esp --bootloader-id=GRUB)
 grub-mkconfig -o /boot/grub/grub.cfg
 #os-prober
 
