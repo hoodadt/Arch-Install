@@ -131,6 +131,14 @@ pacman -S nvidia nvidia-utils (nvidia-lts)
 lspci -k | grep -A 2 -E "(VGA|3D)"
 
 
+// Tune
+# limit Power,GPU Clock - PS-0 (GPU +<target> - VRAM +<target * 2>) Offset
+pacman -S lact mangohud goverlay (lib23-mangohud)
+
+mangohud vkcube
+mangohud glxgears
+
+
 
 //// Desktop Environment
 /// KDE
