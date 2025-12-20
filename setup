@@ -41,7 +41,7 @@ vg create vg /dev/mapper/core
 lvcreate -L 8G -n swap vg
 lvcreate -l +100%FREE -n core vg
 
-mkfs.ext4 /dev/<boot_partition>
+mkfs.fat -F 32 /dev/<boot_partition>
 mkfs.ext4 /dev/vg/core
 mkswap /dev/vg/swap
 swapon /dev/vg/swap
@@ -103,13 +103,13 @@ vim /etc/default/grub
 	GRUB_TIMEOUT=1
 	GRUB_CMDLINE_LINUX_DEFAULT="cryptdevice=UUID=</dev/core_partition_UUID>:core root=/dev/vg/root"
 
-grub-install (--target=x86_64-efi --efi-directory=esp --bootloader-id=GRUB)
+grub-install (--target=x86_64-efi --efi-directory=/efi --bootloader-id=GRUB)
 grub-mkconfig -o /boot/grub/grub.cfg
 #os-prober
 
 
 passwd
-useradd -m -G wheel <username> (-s /bin/bash)
+useradd -m -G wheel -s /bin/bash <username>
 passwd <username>
 vim /etc/sudoers (wheel)
 exit
@@ -122,9 +122,10 @@ reboot
 //// GUI
 /// Display Servers
 // Xorg
-pacman -S xorg
+pacman -S xorg-server
 
 // Wayland
+
 
 /// Display Drivers
 // Amd
@@ -137,7 +138,7 @@ pacman -S mesa intel-media-driver
 
 // Nvidia
 # https://wiki.archlinux.org/title/NVIDIA
-pacman -S nvidia nvidia-utils (nvidia-lts)
+pacman -S nvidia nvidia-utils
 lspci -k | grep -A 2 -E "(VGA|3D)"
 
 
@@ -152,7 +153,7 @@ mangohud glxgears
 
 //// Desktop Environment
 /// KDE
-pacman -S sddm plasma kde-applications kscreen
+pacman -S sddm plasma-meta kde-applications-meta kscreen
 systemctl enable sddm --now
 
 
