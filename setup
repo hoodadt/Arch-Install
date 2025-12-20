@@ -101,7 +101,8 @@ blkid -o value -s UUID </dev/core_partition> >> /etc/default/grub
 
 vim /etc/default/grub
 	GRUB_TIMEOUT=1
-	GRUB_CMDLINE_LINUX_DEFAULT="cryptdevice=UUID=</dev/core_partition_UUID>:core root=/dev/vg/core"
+	GRUB_CMDLINE_LINUX_DEFAULT="cryptdevice=UUID=</dev/core_partition_UUID>:core root=/dev/mapper/core"
+	GRUB_DISABLE_OS_PROBER=false
 
 grub-install (--target=x86_64-efi --efi-directory=/efi --bootloader-id=GRUB)
 grub-mkconfig -o /boot/grub/grub.cfg
