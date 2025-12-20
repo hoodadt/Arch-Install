@@ -7,7 +7,7 @@
 
 //// Base
 cat /sys/firmware/efi/fw_platform_size (should return 64-bit)
-iwtcl wlan0 connet-hidden <ssid>
+iwctl station wlan0 connet-hidden <ssid>
 
 timedatectl set-ntp true
 timedatectl set-timezone <time_zone>
