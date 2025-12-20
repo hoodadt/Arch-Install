@@ -101,7 +101,7 @@ blkid -o value -s UUID </dev/core_partition> >> /etc/default/grub
 
 vim /etc/default/grub
 	GRUB_TIMEOUT=1
-	GRUB_CMDLINE_LINUX_DEFAULT="cryptdevice=UUID=</dev/core_partition_UUID>:core root=/dev/vg/root"
+	GRUB_CMDLINE_LINUX_DEFAULT="cryptdevice=UUID=</dev/core_partition_UUID>:core root=/dev/vg/core"
 
 grub-install (--target=x86_64-efi --efi-directory=/efi --bootloader-id=GRUB)
 grub-mkconfig -o /boot/grub/grub.cfg
@@ -175,7 +175,7 @@ pacman -S xorg xfce4 xfce4-goodies (lightdm ,lightdm-gtk-greeter ,lightdm.servic
 wifi-menu
 cryptsetup luksOpen /dev/<core_partition> core
 
-mount /dev/mapper/core /mnt
+mount /dev/vg/core /mnt
 mount /dev/<boot_partition> /mnt/boot
 mount /dev/<efi_partition> /mnt/boot/efi
 arch-chroot /mnt
