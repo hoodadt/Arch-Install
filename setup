@@ -32,7 +32,7 @@ fdisk /dev/<disk>
 
 
 cryptsetup luksFormat --type luks2 -y -v --cipher aes-xts-plain64 -s 512 --iter-time 2500 --pbkdf argon2id --pbkdf-memory 1048576 --pbkdf-parallel 4 /dev/<core_partition>
-cryptsetup open /dev/<core_partition> core
+cryptsetup open /dev/<core_partition> core (https://wiki.archlinux.org/title/Dm-crypt/Specialties#LUKS2)
 # cryptsetup luksDump /dev/vga/lva1
 # cryptsetup benchmark
 
