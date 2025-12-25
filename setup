@@ -90,9 +90,10 @@ vim /etc/hosts
 
 
 
+# https://wiki.archlinux.org/title/Dm-crypt/Encrypting_an_entire_system#Configuring_mkinitcpio_3
 # Initramfs
 vim /etc/mkinitcpio.conf
-	HOOKS=(base udev keyboard autodetect modconf block encrypt lvm2 filesystems fsck)
+	HOOKS=(sd-encrypt lvm2)
 mkinitcpio -P
 
 
@@ -103,6 +104,7 @@ blkid -o value -s UUID </dev/core_partition> >> /etc/default/grub
 vim /etc/default/grub
 	GRUB_TIMEOUT=1
 	GRUB_CMDLINE_LINUX_DEFAULT="cryptdevice=UUID=</dev/core_partition_UUID>:core root=/dev/vg/core"
+								rd.luks.name=</dev/core_partition_UUID>=core root=/dev/mapper/core
 	GRUB_DISABLE_OS_PROBER=false
 
 grub-install (--target=x86_64-efi --efi-directory=/efi --bootloader-id=GRUB)
