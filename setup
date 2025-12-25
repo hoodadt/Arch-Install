@@ -32,14 +32,15 @@ fdisk /dev/<disk>
 
 
 cryptsetup luksFormat --type luks2 -y -v --cipher aes-xts-plain64 -s 512 --iter-time 2500 --pbkdf argon2id --pbkdf-memory 1048576 --pbkdf-parallel 4 /dev/<core_partition>
-cryptsetup luksOpen /dev/<core_partition> core
+cryptsetup open /dev/<core_partition> core
 # cryptsetup luksDump /dev/vga/lva1
 # cryptsetup benchmark
 
 pvcreate /dev/mapper/core
-vg create vg /dev/mapper/core
+vgcreate vg /dev/mapper/core
 lvcreate -L 8G -n swap vg
 lvcreate -l +100%FREE -n core vg
+lvreduce -L -256M vg/core
 
 mkfs.fat -F 32 /dev/<boot_partition>
 mkfs.ext4 /dev/vg/core
@@ -57,7 +58,7 @@ reflector --sort rate --country 'Iran,' --protocl https --age 168 --save /etc/pa
 
 vim /etc/pacman.conf
 	ParallelDownloads = 24
-pacstrap -K /mnt base base-devel linux linux-firmware amd-ucode grub efibootmgr man-db netoworkmanager lvm2 os-prober git vim tmux firefox openssh
+pacstrap -K /mnt base base-devel linux linux-firmware amd-ucode grub efibootmgr man-db networkmanager lvm2 os-prober git vim tmux firefox openssh
 
 
 genfstab -U /mnt >> /mnt/etc/fstab
@@ -104,7 +105,7 @@ blkid -o value -s UUID </dev/core_partition> >> /etc/default/grub
 vim /etc/default/grub
 	GRUB_TIMEOUT=1
 	GRUB_CMDLINE_LINUX_DEFAULT="cryptdevice=UUID=</dev/core_partition_UUID>:core root=/dev/vg/core"
-								rd.luks.name=</dev/core_partition_UUID>=core root=/dev/mapper/core
+								rd.luks.name=</dev/core_partition_UUID>=core root=/dev/vg/core
 	GRUB_DISABLE_OS_PROBER=false
 
 grub-install (--target=x86_64-efi --efi-directory=/efi --bootloader-id=GRUB)
