@@ -9,7 +9,6 @@
 cat /sys/firmware/efi/fw_platform_size (should return 64-bit)
 iwctl station wlan0 connet-hidden <ssid>
 
-# add gpt label
 fdisk /dev/<disk>
 	# Boot
 	n
