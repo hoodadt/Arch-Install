@@ -9,9 +9,7 @@
 cat /sys/firmware/efi/fw_platform_size (should return 64-bit)
 iwctl station wlan0 connet-hidden <ssid>
 
-timedatectl set-ntp true
-timedatectl set-timezone <time_zone>
-
+# add gpt label
 fdisk /dev/<disk>
 	# Boot
 	n
@@ -40,7 +38,7 @@ pvcreate /dev/mapper/core
 vgcreate vg /dev/mapper/core
 lvcreate -L 8G -n swap vg
 lvcreate -l +100%FREE -n core vg
-lvreduce -L -256M vg/core
+lvreduce -L -256M vg/core #allow using e2scrub
 
 mkfs.fat -F 32 /dev/<boot_partition>
 mkfs.ext4 /dev/vg/core
@@ -58,7 +56,7 @@ reflector --sort rate --country 'Iran,' --protocl https --age 168 --save /etc/pa
 
 vim /etc/pacman.conf
 	ParallelDownloads = 24
-pacstrap -K /mnt base base-devel linux linux-firmware amd-ucode grub efibootmgr man-db networkmanager lvm2 os-prober git vim tmux firefox openssh
+pacstrap -K /mnt base base-devel linux linux-firmware amd-ucode grub efibootmgr man-db networkmanager lvm2 os-prober git vim tmux firefox openssh (linux-headers)
 
 
 genfstab -U /mnt >> /mnt/etc/fstab
@@ -75,6 +73,8 @@ echo '/dev/zram0 none swap defaults,discard,pri=100,x-systemd.makefs 0 0' >> /et
 # Configs
 systemctl enable NetworkManager
 
+timedatectl set-ntp true
+timedatectl set-timezone <time_zone>
 ln -sf /usr/share/zoneinfo/Asia/Tehran /etc/localtime
 hwclock --systohc
 
@@ -186,3 +186,12 @@ mount /dev/<efi_partition> /mnt/boot/efi
 arch-chroot /mnt
 
 unmount -R /mnt
+
+
+
+//// Todo
+# before install
+setfont /usr/share/kbd/consolfonts/sun12x22.psfu.gz
+
+#
+systemctl enable fstrim.timer (allow trim operation for ssd performance, https://www.youtube.com/watch?v=RxzfwZ2SaEs)
