@@ -7,7 +7,7 @@
 
 //// Base
 cat /sys/firmware/efi/fw_platform_size (should return 64-bit)
-iwctl station wlan0 connet-hidden <ssid>
+iwctl station wlan0 connect-hidden <ssid>
 
 fdisk /dev/<disk>
 	# Boot
@@ -51,7 +51,7 @@ mount --mkdir /dev/<efi_partition> /mnt/boot/efi (/mnt/efi)
 
 # Packages
 mv /etc/pacman.d/mirrorlist /etc/pacman.d/mirrorlist.bak
-reflector --sort rate --country 'Iran,' --protocl https --age 168 --save /etc/pacman.d/mirrorlist
+reflector --sort rate --country 'Iran,' --protocol https --age 168 --save /etc/pacman.d/mirrorlist
 
 vim /etc/pacman.conf
 	ParallelDownloads = 24
