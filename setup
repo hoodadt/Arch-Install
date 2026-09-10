@@ -28,21 +28,18 @@ fdisk /dev/<disk>
 	w
 
 
-cryptsetup luksFormat --type luks2 -y -v --cipher aes-xts-plain64 -s 512 --iter-time 2500 --pbkdf argon2id --pbkdf-memory 1048576 --pbkdf-parallel 4 /dev/<core_partition>
+cryptsetup luksFormat --type luks2 -y -v --cipher aes-xts-plain64 -s 512 --iter-time 2500 --pbkdf argon2id --pbkdf-memory 4194308 --pbkdf-parallel 4 /dev/<core_partition>
 cryptsetup open /dev/<core_partition> core (https://wiki.archlinux.org/title/Dm-crypt/Specialties#LUKS2)
-# cryptsetup luksDump /dev/vga/lva1
+# cryptsetup luksDump /dev/<core_partition>
 # cryptsetup benchmark
 
 pvcreate /dev/mapper/core
 vgcreate vg /dev/mapper/core
-lvcreate -L 8G -n swap vg
 lvcreate -l +100%FREE -n core vg
 lvreduce -L -256M vg/core #allow using e2scrub
 
 mkfs.fat -F 32 /dev/<boot_partition>
 mkfs.ext4 /dev/vg/core
-mkswap /dev/vg/swap
-swapon /dev/vg/swap
 
 mount /dev/vg/core /mnt
 mount --mkdir /dev/<boot_partition> /mnt/boot
@@ -50,12 +47,14 @@ mount --mkdir /dev/<efi_partition> /mnt/boot/efi (/mnt/efi)
 
 
 # Packages
-mv /etc/pacman.d/mirrorlist /etc/pacman.d/mirrorlist.bak
+cp /etc/pacman.d/mirrorlist /etc/pacman.d/mirrorlist.bak
 reflector --sort rate --country 'Iran,' --protocol https --age 168 --save /etc/pacman.d/mirrorlist
 
 vim /etc/pacman.conf
 	ParallelDownloads = 24
-pacstrap -K /mnt base base-devel linux linux-firmware amd-ucode grub efibootmgr man-db networkmanager lvm2 os-prober git vim tmux firefox openssh (linux-headers)
+pacstrap -K /mnt base linux linux-firmware amd-ucode grub efibootmgr lvm2 os-prober networkmanager \
+	base-devel man-db git firefox vim tmux openssh 
+	# linux-headers, only for DKMS/out-of-tree kernel modules
 
 
 genfstab -U /mnt >> /mnt/etc/fstab
@@ -63,17 +62,17 @@ arch-chroot /mnt
 
 
 # Enabling zram
+# disk based swap can be avoided entirely by setting up swap on zram after installing the system.
 echo 'zram' > /etc/modules-load.d/zram.conf
 echo 'ACTION=="add", KERNEL=="zram0", ATTR{initstate}=="0", ATTR{comp_algorithm}="zstd", ATTR{disksize}="8G", TAG+="systemd"' > /etc/udev/rules.d/99-zram.rules
 echo '/dev/zram0 none swap defaults,discard,pri=100,x-systemd.makefs 0 0' >> /etc/fstab
-# add as kernel parameter zswap.enabled=0
 
 
 # Configs
 systemctl enable NetworkManager
 
 timedatectl set-ntp true
-timedatectl set-timezone <time_zone>
+timedatectl set-timezone Asia/Tehran
 ln -sf /usr/share/zoneinfo/Asia/Tehran /etc/localtime
 hwclock --systohc
 
@@ -93,18 +92,15 @@ vim /etc/hosts
 # https://wiki.archlinux.org/title/Dm-crypt/Encrypting_an_entire_system#Configuring_mkinitcpio_3
 # Initramfs
 vim /etc/mkinitcpio.conf
-	HOOKS=(sd-encrypt lvm2)
+	HOOKS=(block sd-encrypt lvm2 filesystems)
 mkinitcpio -P
 
 
 
 # Grub
-blkid -o value -s UUID </dev/core_partition> >> /etc/default/grub
-
 vim /etc/default/grub
 	GRUB_TIMEOUT=1
-	GRUB_CMDLINE_LINUX_DEFAULT="cryptdevice=UUID=</dev/core_partition_UUID>:core root=/dev/vg/core"
-								rd.luks.name=</dev/core_partition_UUID>=core root=/dev/vg/core
+	GRUB_CMDLINE_LINUX="rd.luks.name=<:r !blkid -o value -s UUID </dev/core_partition>>=core root=/dev/vg/core zswap.enabled=0"
 	GRUB_DISABLE_OS_PROBER=false
 
 grub-install (--target=x86_64-efi --efi-directory=/efi --bootloader-id=GRUB)
@@ -176,7 +172,7 @@ pacman -S xorg xfce4 xfce4-goodies (lightdm ,lightdm-gtk-greeter ,lightdm.servic
 
 //// Troubleshoot
 wifi-menu
-cryptsetup luksOpen /dev/<core_partition> core
+cryptsetup open /dev/<core_partition> core
 
 mount /dev/vg/core /mnt
 mount /dev/<boot_partition> /mnt/boot
