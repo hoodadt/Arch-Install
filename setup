@@ -28,10 +28,11 @@ fdisk /dev/<disk>
 	w
 
 
-cryptsetup luksFormat --type luks2 -y -v --cipher aes-xts-plain64 -s 512 --iter-time 2500 --pbkdf argon2id --pbkdf-memory 4194308 --pbkdf-parallel 4 /dev/<core_partition>
+cryptsetup luksFormat --type luks2 -y -v --cipher aes-xts-plain64 -s 512 --iter-time 2500 --pbkdf argon2id --pbkdf-memory 4194302 --pbkdf-parallel 4 /dev/<core_partition> (# Trim: have security issues --allow-discards --persistent )
 cryptsetup open /dev/<core_partition> core (https://wiki.archlinux.org/title/Dm-crypt/Specialties#LUKS2)
 # cryptsetup luksDump /dev/<core_partition>
 # cryptsetup benchmark
+# cryptsetup status core
 
 pvcreate /dev/mapper/core
 vgcreate vg /dev/mapper/core
@@ -43,7 +44,7 @@ mkfs.ext4 /dev/vg/core
 
 mount /dev/vg/core /mnt
 mount --mkdir /dev/<boot_partition> /mnt/boot
-mount --mkdir /dev/<efi_partition> /mnt/boot/efi (/mnt/efi)
+mount --mkdir /dev/<efi_partition> /mnt/efi
 
 
 # Packages
@@ -66,10 +67,12 @@ arch-chroot /mnt
 echo 'zram' > /etc/modules-load.d/zram.conf
 echo 'ACTION=="add", KERNEL=="zram0", ATTR{initstate}=="0", ATTR{comp_algorithm}="zstd", ATTR{disksize}="8G", TAG+="systemd"' > /etc/udev/rules.d/99-zram.rules
 echo '/dev/zram0 none swap defaults,discard,pri=100,x-systemd.makefs 0 0' >> /etc/fstab
-
+echo 'vm.swappiness=100' > /etc/sysctl.d/99-zram.conf
+echo 'vm.page-cluster=0' >> /etc/sysctl.d/99-zram.conf
 
 # Configs
-systemctl enable NetworkManager
+systemctl enable NetworkManager 
+systemctl enable fstrim.timer (Security Issues)
 
 timedatectl set-ntp true
 timedatectl set-timezone Asia/Tehran
@@ -103,7 +106,7 @@ vim /etc/default/grub
 	GRUB_CMDLINE_LINUX="rd.luks.name=<:r !blkid -o value -s UUID </dev/core_partition>>=core root=/dev/vg/core zswap.enabled=0"
 	GRUB_DISABLE_OS_PROBER=false
 
-grub-install (--target=x86_64-efi --efi-directory=/efi --bootloader-id=GRUB)
+grub-install --target=x86_64-efi --efi-directory=/efi --bootloader-id=GRUB
 grub-mkconfig -o /boot/grub/grub.cfg
 
 
